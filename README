@@ -1,0 +1,27 @@
+CS3753 (Operating Systems)
+Spring 2012
+University of Colorado Boulder
+Programming Assignment 4
+Public Code
+
+By Andy Sayler - 2012
+http://www.andysayler.com
+
+Adopted From
+Assignment by Dr. Alva Couch
+http://www.cs.tufts.edu/~couch/
+
+With help from:
+Junho Ahn - 2012
+
+---Folders---
+handout - Assignment description and documentation
+
+---Executables---
+
+---Examples---
+Build:
+ make
+
+Clean:
+ make clean
