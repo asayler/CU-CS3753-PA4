@@ -1,0 +1,127 @@
+% CSCI3753 - Operating Systems
+% Spring 2012
+% Programming Assignment 4
+% By Andy Sayler (3/6/12)
+
+\documentclass[12pt]{article}
+
+\usepackage[text={6.5in, 9in}, centering]{geometry}
+\usepackage{graphicx}
+\usepackage{url}
+
+\title{Programming Assignment 3:\\Investigating the Linux Scheduler}
+\author{
+  CSCI 3753 - Operating Systems\\
+  University of Colorado at Boulder\\
+  Spring 2012\\
+  By Andy Sayler and Junho Ahn and Richard Han
+  Adopted from assignment by Dr. Alva Couch, Tufts University
+}
+\date{\emph{Due Date: Wednesday, April 18th, 2012 11:55pm}}
+
+\begin{document}
+
+\maketitle
+
+\section{Assignment Introduction}
+
+\section{Your Task}
+
+\section{Some Implementation Ideas}
+
+\section{What You Must Provide}
+
+When you submit your assignment, you must provide the following as a
+single archive file:
+\begin{itemize}
+\item A copy of all your code
+\item A makefile that builds any necessary code
+\item A README explaining how to build and run your code
+\end{itemize}
+
+\section{What's Included}
+
+We provide some code to help get you started. Feel free to use it as a
+jumping off point (appropriately cited).
+
+\begin{enumerate}
+
+\item {\bf pi.c} The source code for a statistically-based pi
+  calculator. Accepts as the first argument the number of iterations to
+  compute over. Example of a CPU bound process.
+
+\item {\bf Makefile} A GNU Make makefile to build all the code listed
+  here.
+
+\item {\bf README} As the title so eloquently instructs: read it.
+
+\end{enumerate}
+
+\section{Extra Credit}
+
+\section{Grading}
+
+40\% of you grade will be based on the submission you provide.
+To received full credit your submission must:
+\begin{itemize}
+\item Meet all requirements elicited in this document
+\item Code must build with ``-Wall'' and ``-Wextra'' enabled,
+  producing no errors or warnings.
+\item Code must adhere to good coding practices.
+\end{itemize}
+
+The other 60\% of your grade will be determined via your grading
+interview where you will be expected to explain your results and answer
+questions regarding them and any concepts related to this assignment.
+
+\section{Obtaining Code}
+The starting code for this assignment is available on the Moodle and
+on github. If you would like practice using a version control system,
+consider forking the code from github. Using the github code is not
+a requirement, but it will help to insure that you stay up to date
+with any updates or changes to the supplied codebase. It is also
+good practice for the kind of development one might expect to do in
+a professional environment. And since your github code can be easily
+shared, it can be a good way to show off your coding skills to
+potential employers and other programmers.
+
+Github code may be forked from the project page here:\\
+\url{https://github.com/asayler/CU-CS3753-2012-PA4}.
+
+\section{Resources}
+Refer to your textbook and class notes on the Moodle for an overview
+of OS paging policies and implementations.
+
+The Internet\cite{tubes} is also a good resource for finding
+information related to solving this assignment.
+
+You may wish to consult the man pages for the following items, as they
+will be useful and/or required to complete this assignment. Note that
+the first argument to the ``man'' command is the chapter, insuring
+that you access the appropriate version of each man page. See
+\texttt{man man} for more information.
+
+\begin{itemize}
+\item \texttt{man 1 make}
+\end{itemize}
+
+\begin{thebibliography}{9}
+
+\bibitem{K&R} Kernighan, Brian and Dennis, Ritchie.
+  \newblock \emph{The C Programming Language}.
+  \newblock Second Edition: 2009.
+  \newblock Prentice Hall: New Jersey.
+
+\bibitem{tubes} Stevens, Ted.
+  \newblock \emph{Speech on Net Neutrality Bill}.
+  \newblock 2006.
+  \newblock \url{http://youtu.be/f99PcP0aFNE}.
+
+\bibitem{StrunkWhite} Strunk, William, Jr. and White, E.B.
+  \newblock \emph{The Elements of Style}.
+  \newblock Fourth Edition: 2000.
+  \newblock Pearson: New York.
+  
+\end{thebibliography}
+
+\end{document}  
