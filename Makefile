@@ -21,6 +21,8 @@ clean:
 	rm -f test
 	rm -f *.o
 	rm -f *~
+	rm -f *.csv
+	rm -f *.pdf
 	rm -f handout/*~
 	rm -f handout/*.log
 	rm -f handout/*.aux
