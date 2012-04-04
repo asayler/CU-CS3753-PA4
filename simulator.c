@@ -1,3 +1,18 @@
+/*
+ * File: simulator.c
+ * 
+ * Original Author: Dr. Alva Couch
+ *                  http://www.cs.tufts.edu/~couch/
+ * Modified By:     Andy Sayler
+ *                  http://www.andysayler.com
+ *
+ * Project: CSCI 3753 Programming Assignment 4
+ * Create Date: Unknown
+ * Modify Date: 2012/04/03
+ * Description:
+ * 	This is the core simulator code.
+ */
+
 #include <stdio.h> 
 #include <string.h>
 #include <unistd.h>

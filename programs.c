@@ -1,3 +1,19 @@
+/*
+ * File: programs.c
+ *
+ * Original Author: Dr. Alva Couch
+ *                  http://www.cs.tufts.edu/~couch/
+ * Modified By:     Andy Sayler
+ *                  http://www.andysayler.com
+ *
+ * Project: CSCI 3753 Programming Assignment 4
+ * Create Date: Unknown
+ * Modify Date: 2012/04/03
+ * Description:
+ * 	This file defines the programs run by the simulator
+ */
+
+
 #define PROGRAMS 5
 static Program programs[PROGRAMS] = {
     { 1535, 3,

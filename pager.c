@@ -16,7 +16,6 @@
  *      upon this implmentation.
  */
 
-
 #include <stdio.h> 
 
 #include "simulator.h"
