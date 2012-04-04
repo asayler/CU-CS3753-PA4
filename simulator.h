@@ -23,13 +23,15 @@
 #define PHYSICALPAGES 100	/* number of available physical pages */ 
 #define MAXPC (MAXPROCPAGES*PAGESIZE) /* largest PC value */ 
 
-typedef struct pentry { 
-   long active; 
-   long pc; 
-   long npages; 
-   long pages[MAXPROCPAGES]; /* 0 if not allocated, 1 if allocated */ 
-} Pentry ; 
+struct pentry {
+    long active; 
+    long pc; 
+    long npages; 
+    long pages[MAXPROCPAGES]; /* 0 if not allocated, 1 if allocated */ 
+};
 
-int pageout(int process, int page); 
-int pagein (int process, int page); 
-void pageit(Pentry q[MAXPROCESSES]); 
+typedef struct pentry Pentry; 
+
+extern int pageout(int process, int page); 
+extern int pagein (int process, int page); 
+extern void pageit(Pentry q[MAXPROCESSES]); 

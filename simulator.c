@@ -155,23 +155,6 @@ typedef struct process {
    long kind; 			/* kind of process from table */ 
 } Process;
 
-static void process_print(Process *q) { 
-   long i; 
-   fprintf(stderr,"pc=%ld",q->pc); 
-   fprintf(stderr," nbcontexts=%ld",q->nbcontexts); 
-   fprintf(stderr," active=%ld",q->active); 
-   fprintf(stderr," compute=%ld",q->compute); 
-   fprintf(stderr," block=%ld",q->block); 
-   fprintf(stderr," npages=%ld",q->npages); 
-   fprintf(stderr," pid=%ld",q->pid); 
-   fprintf(stderr," kind=%ld",q->kind); 
-   fprintf(stderr," { "); 
-   for (i=0; i<MAXPROCPAGES; i++) { 
-	fprintf(stderr,"%ld ",q->pages[i]); 
-   } 
-   fprintf(stderr,"}\n"); 
-} 
-
 static Process *processes[MAXPROCESSES]; 
 
 #include "programs.c" 

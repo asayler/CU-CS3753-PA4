@@ -66,8 +66,14 @@ void pageit(Pentry q[MAXPROCESSES]) {
 	    break;
 	}
     } 
+
     /* advance time for next pageit iteration */
     tick++;
+    
+    /* Get rid of unused var error for timestamps */
+    /* note: remove this once timestamps is used */
+    (void) timestamps;
+
 } 
 
 // proc: process to work upon (0-19) 

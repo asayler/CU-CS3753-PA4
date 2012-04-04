@@ -17,7 +17,17 @@ Junho Ahn - 2012
 ---Folders---
 handout - Assignment description and documentation
 
+---Files---
+Makefile - GNU makefile to build all relevant code
+pager.c - Paging strategy implementation (this is what you modify)
+simulator.c - Core simualtor code (look but don't touch)
+simulator.h - Exported functions and structs for use with simulator
+programs.c - Defines test "programs" for simulator to run
+
 ---Executables---
+test - Runs simulator using "programs" defined in programs.c
+       and paging strategy defined in pager.c.
+       Includes various run-time options. Run with '-help' for details.
 
 ---Examples---
 Build:
@@ -25,3 +35,9 @@ Build:
 
 Clean:
  make clean
+
+View test options:
+ ./test -help
+
+Run test:
+ ./test
