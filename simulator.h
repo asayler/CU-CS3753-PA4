@@ -32,6 +32,35 @@ struct pentry {
 
 typedef struct pentry Pentry; 
 
-extern int pageout(int process, int page); 
+/* int pagein (int process, int page)
+ *   This pages in the requested page
+ * Arguments:
+ *   proc: process to work upon (0-19) 
+ *   page: page to put in (0-19)
+ * Returns:
+ *   1 if pagein started or already running
+ *   0 if it can't start (e.g., swapping out) 
+ */
 extern int pagein (int process, int page); 
+
+/* int pageout(int process, int page)
+ *   This pages out the requested page.
+ * Arguments:
+ *   proc: process to work upon (0-19)
+ *   page: page to swap out. 
+ * Returns: 
+ *   1 if pageout started or already running
+ *   0 if can't start (e.g., swapping in)
+ */
+extern int pageout(int process, int page); 
+
+/* void pageit(Pentry q[MAXPROCESSES])
+ *   This is called by the simulator
+ *   every time something interesting occurs.
+ *   It is where you implement the paging strategy.
+ * Arguments:   
+ *   q: state of every process
+ * Returns:
+ *   void 
+ */
 extern void pageit(Pentry q[MAXPROCESSES]); 
