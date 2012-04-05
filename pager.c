@@ -51,7 +51,7 @@ void pageit(Pentry q[MAXPROCESSES]) {
 		if(!pagein(proc,page)) {
 		    /* If swapping fails, swap out another page */
 		    for(oldpage=0; oldpage < q[proc].npages; oldpage++) {
-			/* Make sure page isn't one I want */
+	 		/* Make sure page isn't one I want */
 			if(oldpage != page) {
 			    /* Try to swap-out */
 			    if(pageout(proc,oldpage)) {

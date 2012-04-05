@@ -8,6 +8,57 @@
 \usepackage[text={6.5in, 9in}, centering]{geometry}
 \usepackage{graphicx}
 \usepackage{url}
+\usepackage{listings}
+\usepackage{hyperref}
+
+\lstset{
+  language={},
+  morekeywords={for,end,run,if,else,endif,exit,endprog,goto},
+  basicstyle=\footnotesize,
+  numbers=left,
+  numberstyle=\tiny,
+  stepnumber=1,
+  numbersep=5pt,
+  showspaces=false,
+  showstringspaces=false,
+  showtabs=false,
+  tabsize=4,
+  captionpos=b,
+  breaklines=true,
+  breakatwhitespace=false,
+  frame=single,
+  frameround=tttt
+}
+
+\hypersetup{
+    colorlinks,
+    citecolor=black,
+    filecolor=black,
+    linkcolor=black,
+    urlcolor=black
+}
+
+\newenvironment{packed_enum}{
+\begin{enumerate}
+  \setlength{\itemsep}{1pt}
+  \setlength{\parskip}{0pt}
+  \setlength{\parsep}{0pt}
+}{\end{enumerate}}
+
+\newenvironment{packed_item}{
+\begin{itemize}
+  \setlength{\itemsep}{1pt}
+  \setlength{\parskip}{0pt}
+  \setlength{\parsep}{0pt}
+}{\end{itemize}}
+
+\newenvironment{packed_desc}{
+\begin{description}
+  \setlength{\itemsep}{1pt}
+  \setlength{\parskip}{0pt}
+  \setlength{\parsep}{0pt}
+}{\end{description}}
+
 
 \title{Programming Assignment 4:\\Virtual Memory Paging Strategies}
 \author{
@@ -28,25 +79,26 @@
 All modern operating systems use virtual memory and paging in order to
 effectively utilize the computer's memory hierarchy. Paging is an
 effective means of providing memory space protection to processes, of
-enabling the system to utilize secondary storage systems fro addition
-memory space, and of avoiding the need to allocate memory sequentially.
+enabling the system to utilize secondary storage systems for additional
+memory space, and of avoiding the need to allocate memory sequentially
+for each process.
 
-In CS2400, we
-studied how virtual memory systems are structured, and how the MMU
-converts virtual memory address to physical memory addressees by
+We have studied how virtual memory systems are structured and how the MMU
+converts virtual memory address to physical memory addresses by
 means of a page table and a translation lookaside buffer (TLB). When a
 page has a valid mapping from VM address to physical address, we say
 the page is ``swapped in''. When no valid mapping is available, the page
 is either invalid (a segmentation fault), or more likely, ``swapped
-out''. When the MMU determines that memory request requires access to
-a page that is current swapped out, it calls the operating system's
+out''. When the MMU determines that a memory request requires access to
+a page that is currently swapped out, it calls the operating system's
 page-fault handler. This handler must swap-in the necessary page,
-possible evicting another page to secondary memory in the process, and then retry the
-offending memory access and hand control back to the MMU.
+possibly evicting another page to secondary memory in the process.
+It then retries the
+offending memory access and hands control back to the MMU.
 
 As you might imagine, how the OS chooses which page to evict when it
 has reached the limit of available physical memory can have a major
-effect on the performance of the programs running under the OS.
+effect on the performance of the processes running under the OS.
 In this assignment, we will look at various strategies for managing
 the system page table and controlling when pages are paged in and when
 they are paged out.
@@ -57,47 +109,49 @@ The goal of this assignment is to implement a paging strategy that
 maximizes the performance of program memory access across a
 set of predefined processes. You will accomplish this task by using a
 paging simulator that has already been created for you. Your job is to
-write the paging strategy that the simulator utilizes. You will be graded
+write the paging strategy that the simulator utilizes (roughly
+equivalent to the role the page fault handler plays in a real OS).
+You will be graded
 on the throughput of your paging strategy (the ratio of time spent doing
-useful work vs time spent paging).
+useful work vs time spent waiting on the necessary paging to occur).
 
 \subsection {The Simulator Environment}
 
-The simulator has been provided for you. You have access to the course
+The simulator has been provided for you. You have access to the source
 code if you wish to review it (\texttt{simulator.c} and
 \texttt{simulator.h}), but you
 should not need to modify this code for the sake of this
 assignment. You will be graded using the stock simulator, so any
 enhancements to the simulator program made with the intention of
-improving your performance will be for nigh.
+improving your performance will be for naught.
 
 The simulator runs a random collection of processes utilizing a limited
 number of shared physical pages. Each process has a fixed number of
-virtual pages that it might try to access. For the purpose of this
+virtual pages composing the processes virtual memory space
+that it might try to access. For the purpose of this
 simulation, all memory access is due to the need to load program
 code. Thus, the simulated program counter (PC) for each process
 dictates which memory location that process currently requires access
-to, and thus which virtual process page must be swapped-in for the
+to, and thus which virtual page must be swapped-in for the
 process to successfully continue.
 
-The constants discussed above that define the simulated environment
+The values of the constants mentioned above
 are available in the \texttt{simulator.h} file. For the purposes of
-grading your assignment, the default constants will be used:
+grading your assignment, the default values will be used:
 
-\begin{itemize}
+\begin{packed_item}
 \item 20 virtual pages per process (\texttt{MAXPROCPAGES})
-\item 100 physical pages total (\texttt{PHYSICALPAGES})
+\item 100 physical pages (frames) total (\texttt{PHYSICALPAGES})
 \item 20 simultaneous processes competing for pages (\texttt{MAXPROCESSES})
 \item 128 memory unit page size (\texttt{PAGESIZE})
-\item 100 tick delay to swap page in our out (\texttt{PAGEWAIT})
-\end{itemize}
+\item 100 tick delay to swap a page in our out (\texttt{PAGEWAIT})
+\end{packed_item}
 
 As you can see, you are working in a very resource constrained
 environment. You will have to deal with attempts to access up to 400
-virtual pages (20 processes times 20 virtual pages per process), but
-may only have at most 100 physical pages swapped on at any given
-time. Thus, at best, three-quarters of the potentially required pages
-will be swapped-out at any given moment.
+virtual pages (20 processes times 20 virtual pages per process),
+but may only have, at most, 100 physical pages swapped in at any given
+time.
 
 In addition, swapping a page
 in or out is an expensive operation, requiring 100 ticks to
@@ -105,76 +159,237 @@ complete. A tick is the minimum time measurement unit in the
 simulator. Each instruction or step in the simulated programs requires 1
 tick to complete. Thus, in the worst case where every instruction is a
 page miss (requiring a swap-in), you will spend 100 ticks of paging
-overhead for every 1 tick of useful work. This leads to a overhead to
-useful work ration of 100 to 1: very, very, poor performance.
+overhead for every 1 tick of useful work. If all physical pages are in
+use, this turns into 200 ticks per page miss since you must also
+spend 100 ticks swapping a page out in order to make room for the
+required page to be swapped in. This leads to a overhead to
+useful work ratio of 200 to 1: very, very, poor performance.
 
 \subsection {The Simulator Interface}
 
 The simulator exports three functions through which you will interact
 with it. The first function is called \texttt{pageit}. This is the
-core paging function. It is equivalent to the page-fault handler in
-your Operating System. The simulator calls \texttt{pageit} anytime
+core paging function. It is roughly equivalent to the page-fault handler in
+your operating system. The simulator calls \texttt{pageit} anytime
 something interesting happens (memory access, page fault, process
 completion, etc). It passes the function a page map for each process,
 as well as the current value of the program counter for each
 process. See \texttt{simulator.h} for details. You will
 implement your paging strategy in the body of this function.
 
+The \texttt{pageit} function is passed an array of \texttt{pentry}
+structs, one per process. This struct contains a copy of all of the
+necessary memory information that the simulator maintains for each
+process. You will need the information contained in this struct to make
+intelligent paging decisions. It is the simulator's job to maintain
+this information. You should just read it as necessary. The struct
+contains:
+
+\begin{packed_desc}
+\item[\texttt{long active}] \hfill \\
+  A flag indicating whether or not the
+  process has completed. \texttt{1} if running, \texttt{0} if exited.
+\item[\texttt{long pc}] \hfill \\
+  The value of the program counter for the
+  process. The current page can be calculates as $page = pc / PAGESIZE$.
+\item[\texttt{long npages}] \hfill \\
+  The number of pages in the processes
+  memory space. If the process is active (running), this will be equal
+  to MAXPROCPAGES. If the process has exited, this will be 0.
+\item[\texttt{long pages[MAXPROCPAGES]}] \hfill \\
+  A bitmap array representing the
+  page map for a given process. If \texttt{pages[page \#]} is
+  \texttt{0}, page
+  is swapped out. If \texttt{pages[page \#]} is \texttt{1},
+  page is currently swapped in.
+\end{packed_desc}
+
 The simulator also exports a function called \texttt{pagein} and a
 function called \texttt{pageout}. These functions request that a
-specific page for a specific project be swapped-in or swapped-out,
+specific page for a specific process be swapped-in or swapped-out,
 respectively. You will use these function to control the allocation of
 virtual and physical pages when writing your paging strategy. Each of
 these functions return \texttt{1} if they succeed in \emph{starting} a
 paging operation, or if a paging operation is \emph{already in
   progress}. 100 ticks after starting a paging operation, the
-operation will complete, and the page maps passed to \texttt{pageit}
-will reflect the new state of the simulator. These function return
+operation will complete. Upon completion, the page maps passed
+to \texttt{pageit}
+will reflect the new state of the simulator. These functions return
 \texttt{0} if the paging request can not be processed (due to
 exceeding the limit of physical pages or because another paging
 operation is currently in process on the requested page) or if the
 request is invalid (paging operation requests non-existent page,
 etc). You can use these function to test whether or not a page is
-available to be paged in. If \texttt{1} is returned, the page is available
+available to be paged in or out.
+If \texttt{1} is returned, the page is available
 and paging has begun. If \texttt{0} is returned, the page is not
 available.
 
 \subsection {The Simulated Programs}
 
-The simulator populate sits 20 processes by randomly selecting processes
-from a collection of 5 simulated ``programs''.
+The simulator populates its 20 processes by randomly selecting processes
+from a collection of 5 simulated ``programs''. Pseudo code for each of
+the possible 5 programs is provided in Listings \ref{lst:pgm1} through
+\ref{lst:pgm5}.
+
+\lstinputlisting[
+  caption={Test Program 1 - A loop with an inner branch},
+  label=lst:pgm1
+]{../pgm1.pseudo}
+
+\lstinputlisting[
+  caption={Test Program 2 - Single loop},
+  label=lst:pgm2
+]{../pgm2.pseudo}
+
+\lstinputlisting[
+  caption={Test Program 3 - Double Nested Loop},
+  label=lst:pgm3
+]{../pgm3.pseudo}
+
+\lstinputlisting[
+  caption={Test Program 4 - Linear},
+  label=lst:pgm4
+]{../pgm4.pseudo}
+
+\lstinputlisting[
+  caption={Test Program 5 - Probabilistic backward branch},
+  label=lst:pgm5
+]{../pgm5.pseudo}
+
+This simple pseudo code notation shows you what will happen in each
+process:
+\begin{packed_item}
+\item {\bf for X Y}: A ``for'' loop with between X and Y iterations
+  (chosen randomly)
+\item {\bf run Z}: Run Z (unspecified) instructions in sequence
+\item {\bf if P}: Run next clause with probability P,
+  run else clause (if any) with probability (1-P).
+\item {\bf goto label}: Jump to ``label''
+\end{packed_item}
+
+You may wish to use this knowledge about the possible programs to:
+\begin{packed_item}
+\item Predict what pages a process will need next with rather high accuracy.
+\item Profile processes and know which kind of process each is.
+\item Accurately predict what pages are needed next by a process.
+\end{packed_item}
 
 \section{Some Implementation Ideas}
 
-\section{What You Must Provide}
+A basic ``one-process-at-a-time'' implementation is provided for
+you. This implementation never actually ends up having to swap out any
+pages. Since only one process is allocated pages at a time, no more than
+20 pages are ever in use. When each process completed, it release all
+of its pages and the next process is allowed to allocate pages and
+run. This is a very simple solution, and as you might expect, does not
+provide very good performance. Still, it provides a simple starting
+point that demonstrates the simulator API. See \texttt{pager.c} for more
+information.
 
-When you submit your assignment, you must provide the following as a
-single archive file:
-\begin{itemize}
-\item A copy of all your code
-\item A makefile that builds any necessary code
-\item A README explaining how to build and run your code
-\end{itemize}
+To start, create some form of ``Least Recently Used'' (LRU) paging
+algorithm. An LRU algorithms select a page that has not been accessed
+for some time when they must swap a page out to make room for a new
+page to be swapped in. An LRU algorithm can either operate globally, or
+with respect to a given process. In the latter case, you may wish to
+pre-reserve a number of physical pages for each process and only allow
+each process to compete for pages from this subset. Your LRU algorithm
+should perform much better than the trivial solution discussed above,
+but will still suffer from performance issues. We can do better.
+
+To really do well on this assignment, you must create some form of
+predictive paging algorithm. Predictive algorithms attempt to predict
+what pages each process will require in the future and then swaps
+these pages in before they are needed. When these pages are needed,
+they are thus already swapped in and ready to go. The process need not
+block to wait for the required pages to be swapped in.
+
+There are effectively two approaches to predictive algorithms. The
+first approach is to leverage your knowledge of the possible program
+types (see previous section). In this approach, one generally attempts
+to heuristically determine which program each process is an instance of
+by tracking the movement of the processes' program counter. Once each
+process is classified, you can use further heuristics to determine where
+in it;s execution the process is, and then implement a paging strategy
+that attempts to swap-in pages required by upcoming program actions
+before they occur. Since the programs all have probabilistic elements,
+this approach will never be perfect, but it can do very well if
+successful.
+
+The second approach to predictive algorithms is to ignore the
+knowledge you have been given regarding the various program
+types. Instead, you might track each processes program counter to try
+to detect various common patterns (loops, jumps to specific locations,
+etc). If you detect a pattern, you assume that it will continue to
+repeat and attempt to swap in the necessary pages that the pattern
+touches before it needs them.
+
+Note that in any predictive operation, you ideally wish to stay
+100-200 ticks ahead of the execution of each process. This is the
+necessary predictive lead time in which you must make paging decisions
+in order to insure that the necessary pages are available when the
+process reaches them and that no blocking time is required.
+
+There are a number of additional predictive notions that might prove
+useful involving state-space analysis and similar techniques. We
+will leave such solutions to the student to investigate if she
+wishes. Please see the references section for additional information
+and ideas.
 
 \section{What's Included}
 
 We provide some code to help get you started. Feel free to use it as a
 jumping off point (appropriately cited).
 
-\begin{enumerate}
-
+\begin{packed_enum}
 \item {\bf Makefile} A GNU Make makefile to build all the code listed
   here.
-
 \item {\bf README} As the title so eloquently instructs: read it.
+\item {\bf simulator.c} The core simulator course code. For reference
+  only.
+\item {\bf simulator.h} The simulator header file including simulator
+  API.
+\item {\bf programs.c} Struct representing simulated programs for use
+  by simulator. For reference and use by simulator code only.
+\item {\bf pager.c} A basic paging implementation. This (or a copy of
+  this) is the file you will modify to implement your paging
+  strategies.
+\item {\bf test} Executable test program. Runs the simulator using
+  your paging strategy. Built using \texttt{Makefile}. The simulator
+  provides a lot of tools to help you analyze your program.
+  Run \texttt{./test -help} for information on available options. It
+  also responds to various signals by printing the current page table
+  and process execution state to the screen (try \texttt{ctrl-c} while
+  simulator is executing).
+\item {\bf see.R} An R script for displaying a visualization of the
+  process run/block activity in a simulation.
+  You must first run \texttt{./test -csv} to
+  generate the necessary trace files. To run visualization, lunch R in
+  windowed graphics mode (in Linux: \texttt{R -g Tk \&} at the command
+  prompt) from the directory containing the trace
+  files (or use \texttt{setwd} to set working directory to directory
+  containing trace files). Then run \texttt{source(``see.r'')} at the R
+  command prompt to lunch the visualization.
+\end{packed_enum}
 
-\end{enumerate}
+\section{What You Must Provide}
 
-\section{Extra Credit}
+When you submit your assignment, you must provide the following as a
+single archive file:
+\begin{packed_enum}
+\item A copy of your LRU paging implementation
+\item A copy of your best predictive paging implementation
+\item A makefile that builds any necessary code
+\item A README explaining how to build and run your code
+\end{packed_enum}
 
 \section{Grading}
 
-40\% of you grade will be based on the submission you provide.
+40\% of you grade will be based on the performance of the
+best pager implementation that you provide.
+
+
+
 To received full credit your submission must:
 \begin{itemize}
 \item Meet all requirements elicited in this document
@@ -186,6 +401,8 @@ To received full credit your submission must:
 The other 60\% of your grade will be determined via your grading
 interview where you will be expected to explain your results and answer
 questions regarding them and any concepts related to this assignment.
+
+\section{Extra Credit}
 
 \section{Obtaining Code}
 The starting code for this assignment is available on the Moodle and

@@ -1,0 +1,11 @@
+# loop with inner branch
+  for 10 30 
+      run 500
+      if .4
+          run 900 
+      else
+          run 131
+      endif
+  end
+  exit
+endprog

@@ -6,10 +6,13 @@ LFLAGS = -g -Wall -Wextra
 
 .PHONY: all clean
 
-all: test
+all: test test-lru
 
 test: simulator.o pager.o
 	$(CC) $(LFLAGS) $^ -o $@ -lm  
+
+test-lru: simulator.o pager-lru.o
+	$(CC) $(LFLAGS) $^ -o $@ -lm 
 
 simulator.o: simulator.c programs.c simulator.h
 	$(CC) $(CFLAGS) $<
@@ -17,8 +20,11 @@ simulator.o: simulator.c programs.c simulator.h
 pager.o: pager.c simulator.h 
 	$(CC) $(CFLAGS) $<
 
+pager-lru.o: pager-lru.c simulator.h 
+	$(CC) $(CFLAGS) $<
+
 clean:
-	rm -f test
+	rm -f test test-lru
 	rm -f *.o
 	rm -f *~
 	rm -f *.csv

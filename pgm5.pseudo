@@ -1,0 +1,10 @@
+# probabilistic backward branch
+  for 10 20
+label:
+      run 500
+      if .5 
+          goto label
+      endif
+  end
+  exit
+endprog

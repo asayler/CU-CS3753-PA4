@@ -1,0 +1,9 @@
+# doubly-nested loop 
+  for 10 20 
+      run 1166
+      for 10 20 
+          run 516
+       end
+  end
+  exit
+endprog
