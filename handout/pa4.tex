@@ -351,11 +351,12 @@ jumping off point (appropriately cited).
   API.
 \item {\bf programs.c} Struct representing simulated programs for use
   by simulator. For reference and use by simulator code only.
-\item {\bf pager.c} A basic paging implementation. This (or a copy of
-  this) is the file you will modify to implement your paging
-  strategies.
-\item {\bf test} Executable test program. Runs the simulator using
-  your paging strategy. Built using \texttt{Makefile}. The simulator
+\item {\bf pager-basic.c} A basic paging implementation that only runs
+  one process at a time.
+\item {\bf pager-lru.c} A stub for your LRU paging implementation.
+\item {\bf pager-predict.c} A stub for your predictive paging implementation.
+\item {\bf test-*} Executable test programs. Runs the simulator using
+  your pager-*.c strategy. Built using \texttt{Makefile}. The simulator
   provides a lot of tools to help you analyze your program.
   Run \texttt{./test -help} for information on available options. It
   also responds to various signals by printing the current page table
