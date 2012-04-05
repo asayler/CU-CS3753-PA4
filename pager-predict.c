@@ -1,5 +1,5 @@
 /*
- * File: pager-lru.c
+ * File: pager-predict.c
  * Author:       Andy Sayler
  *               http://www.andysayler.com
  * Adopted From: Dr. Alva Couch
@@ -9,7 +9,7 @@
  * Create Date: Unknown
  * Modify Date: 2012/04/03
  * Description:
- * 	This file contains an lru pageit
+ * 	This file contains a predictive pageit
  *      implmentation.
  */
 
@@ -20,30 +20,25 @@
 
 void pageit(Pentry q[MAXPROCESSES]) { 
     
-    /* This file contains the stub for an LRU pager */
+    /* This file contains the stub for a predictive pager */
     /* You may need to add/remove/modify any part of this file */
 
     /* Static vars */
     static int initialized = 0;
     static int tick = 1; // artificial time
-    static int timestamps[MAXPROCESSES][MAXPROCPAGES];
-
+    
     /* Local vars */
-    int proctmp;
-    int pagetmp;
+    
 
     /* initialize static vars on first run */
     if(!initialized){
-	for(proctmp=0; proctmp < MAXPROCESSES; proctmp++){
-	    for(pagetmp=0; pagetmp < MAXPROCPAGES; pagetmp++){
-		timestamps[proctmp][pagetmp] = 0; 
-	    }
-	}
+	/* Init complex static vars here */
+	
 	initialized = 1;
     }
     
-    /* TODO: Implement LRU Paging */
-    fprintf(stderr, "pager-lru not yet implemented. Exiting...\n");
+    /* TODO: Implement Predictive Paging */
+    fprintf(stderr, "pager-predict not yet implemented. Exiting...\n");
     exit(EXIT_FAILURE);
 
     /* advance time for next pageit iteration */

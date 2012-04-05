@@ -387,21 +387,34 @@ single archive file:
 \section{Grading}
 
 40\% of you grade will be based on the performance of the
-best pager implementation that you provide.
+best pager implementation that you provide. The following simulation
+scores will earn the corresponding number of points:
+\begin{packed_item}
+\item Code does not compile without errors : 0 Points
+\item $score >= 1.28$ : 5 Points
+\item $0.64 <= score < 1.28$ : 10 Points
+\item $0.32 <= score < 0.64$ : 15 Points
+\item $0.16 <= score < 0.32$ : 20 Points
+\item $0.08 <= score < 0.16$ : 25 Points
+\item $0.04 <= score < 0.08$ : 30 Points
+\item $0.02 <= score < 0.04$ : 35 Points
+\item $0.01 <= score < 0.02$ : 40 Points
+\item $0.005 <= score < 0.01$ : 40 Points + 5 Points EC
+\item $score < 0.005$ : 40 Points + 10 Points EC
+\end{packed_item}
 
-
-
-To received full credit your submission must:
-\begin{itemize}
+If your code generates warnings when building under gcc on the VM
+using \texttt{-Wall} and \texttt{-Warnings} you will be penalized 1
+point per warning. In addition, to received full credit your submission must:
+\begin{packed_item}
 \item Meet all requirements elicited in this document
-\item Code must build with ``-Wall'' and ``-Wextra'' enabled,
-  producing no errors or warnings.
 \item Code must adhere to good coding practices.
-\end{itemize}
+\item Code must be submitted to Moodle prior to due date.
+\end{packed_item}
 
 The other 60\% of your grade will be determined via your grading
-interview where you will be expected to explain your results and answer
-questions regarding them and any concepts related to this assignment.
+interview where you will be expected to explain your work and answer
+questions regarding it and any concepts related to this assignment.
 
 \section{Extra Credit}
 
@@ -437,9 +450,9 @@ the first argument to the ``man'' command is the chapter, insuring
 that you access the appropriate version of each man page. See
 \texttt{man man} for more information.
 
-\begin{itemize}
+\begin{packed_item}
 \item \texttt{man 1 make}
-\end{itemize}
+\end{packed_item}
 
 \begin{thebibliography}{9}
 
