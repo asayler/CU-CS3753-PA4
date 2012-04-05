@@ -29,13 +29,8 @@ void pageit(Pentry q[MAXPROCESSES]) {
     static int timestamps[MAXPROCESSES][MAXPROCPAGES];
 
     /* Local vars */
-    int proc;
     int proctmp;
-    int page;
     int pagetmp;
-    int pc;
-    int oldestPage;
-    int minTick;
 
     /* initialize static vars on first run */
     if(!initialized){

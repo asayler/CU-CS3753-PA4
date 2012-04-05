@@ -6,9 +6,9 @@ LFLAGS = -g -Wall -Wextra
 
 .PHONY: all clean
 
-all: test test-lru
+all: test-basic test-lru
 
-test: simulator.o pager.o
+test-basic: simulator.o pager-basic.o
 	$(CC) $(LFLAGS) $^ -o $@ -lm  
 
 test-lru: simulator.o pager-lru.o
@@ -17,7 +17,7 @@ test-lru: simulator.o pager-lru.o
 simulator.o: simulator.c programs.c simulator.h
 	$(CC) $(CFLAGS) $<
 
-pager.o: pager.c simulator.h 
+pager-basic.o: pager-basic.c simulator.h 
 	$(CC) $(CFLAGS) $<
 
 pager-lru.o: pager-lru.c simulator.h 
