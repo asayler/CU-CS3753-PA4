@@ -59,7 +59,6 @@
   \setlength{\parsep}{0pt}
 }{\end{description}}
 
-
 \title{Programming Assignment 4:\\Virtual Memory Paging Strategies}
 \author{
   CSCI 3753 - Operating Systems\\
@@ -79,12 +78,12 @@
 All modern operating systems use virtual memory and paging in order to
 effectively utilize the computer's memory hierarchy. Paging is an
 effective means of providing memory space protection to processes, of
-enabling the system to utilize secondary storage systems for additional
+enabling the system to utilize secondary storage for additional
 memory space, and of avoiding the need to allocate memory sequentially
 for each process.
 
 We have studied how virtual memory systems are structured and how the MMU
-converts virtual memory address to physical memory addresses by
+converts virtual memory addresses to physical memory addresses by
 means of a page table and a translation lookaside buffer (TLB). When a
 page has a valid mapping from VM address to physical address, we say
 the page is ``swapped in''. When no valid mapping is available, the page
@@ -97,8 +96,9 @@ It then retries the
 offending memory access and hands control back to the MMU.
 
 As you might imagine, how the OS chooses which page to evict when it
-has reached the limit of available physical memory can have a major
-effect on the performance of the processes running under the OS.
+has reached the limit of available physical pages (sometime called
+frames) can have a major
+effect on the performance of the memory access on a given system.
 In this assignment, we will look at various strategies for managing
 the system page table and controlling when pages are paged in and when
 they are paged out.
@@ -106,13 +106,16 @@ they are paged out.
 \section{Your Task}
 
 The goal of this assignment is to implement a paging strategy that
-maximizes the performance of program memory access across a
-set of predefined processes. You will accomplish this task by using a
+maximizes the performance of the memory access in a
+set of predefined programs. You will accomplish this task by using a
 paging simulator that has already been created for you. Your job is to
 write the paging strategy that the simulator utilizes (roughly
-equivalent to the role the page fault handler plays in a real OS).
+equivalent to the role the page fault handler plays in a real OS). Your
+initial goal will be to create a Least Recently Used paging
+implementation. You will then need to implement some form of predictive
+page algorithm to increase the performance of your solution.
 You will be graded
-on the throughput of your paging strategy (the ratio of time spent doing
+on the throughput of your solution (the ratio of time spent doing
 useful work vs time spent waiting on the necessary paging to occur).
 
 \subsection {The Simulator Environment}
@@ -125,9 +128,9 @@ assignment. You will be graded using the stock simulator, so any
 enhancements to the simulator program made with the intention of
 improving your performance will be for naught.
 
-The simulator runs a random collection of processes utilizing a limited
+The simulator runs a random set of programs utilizing a limited
 number of shared physical pages. Each process has a fixed number of
-virtual pages composing the processes virtual memory space
+virtual pages, the process's virtual memory space,
 that it might try to access. For the purpose of this
 simulation, all memory access is due to the need to load program
 code. Thus, the simulated program counter (PC) for each process
@@ -144,7 +147,7 @@ grading your assignment, the default values will be used:
 \item 100 physical pages (frames) total (\texttt{PHYSICALPAGES})
 \item 20 simultaneous processes competing for pages (\texttt{MAXPROCESSES})
 \item 128 memory unit page size (\texttt{PAGESIZE})
-\item 100 tick delay to swap a page in our out (\texttt{PAGEWAIT})
+\item 100 tick delay to swap a page in or out (\texttt{PAGEWAIT})
 \end{packed_item}
 
 As you can see, you are working in a very resource constrained
@@ -162,8 +165,10 @@ page miss (requiring a swap-in), you will spend 100 ticks of paging
 overhead for every 1 tick of useful work. If all physical pages are in
 use, this turns into 200 ticks per page miss since you must also
 spend 100 ticks swapping a page out in order to make room for the
-required page to be swapped in. This leads to a overhead to
-useful work ratio of 200 to 1: very, very, poor performance.
+required page to be swapped in. This leads to an ``overhead to
+useful work'' ratio of 200 to 1: very, very, poor performance. Your
+goal is to implement a system that does much better than this worst case
+scenario.
 
 \subsection {The Simulator Interface}
 
@@ -191,17 +196,17 @@ contains:
   process has completed. \texttt{1} if running, \texttt{0} if exited.
 \item[\texttt{long pc}] \hfill \\
   The value of the program counter for the
-  process. The current page can be calculates as $page = pc / PAGESIZE$.
+  process. The current page can be calculated as $page = pc / PAGESIZE$.
 \item[\texttt{long npages}] \hfill \\
   The number of pages in the processes
   memory space. If the process is active (running), this will be equal
   to MAXPROCPAGES. If the process has exited, this will be 0.
 \item[\texttt{long pages[MAXPROCPAGES]}] \hfill \\
   A bitmap array representing the
-  page map for a given process. If \texttt{pages[page \#]} is
-  \texttt{0}, page
-  is swapped out. If \texttt{pages[page \#]} is \texttt{1},
-  page is currently swapped in.
+  page map for a given process. If \texttt{pages[X]} is
+  \texttt{0}, page X
+  is swapped out. If \texttt{pages[X]} is \texttt{1},
+  page X is currently swapped in.
 \end{packed_desc}
 
 The simulator also exports a function called \texttt{pagein} and a
@@ -209,7 +214,7 @@ function called \texttt{pageout}. These functions request that a
 specific page for a specific process be swapped-in or swapped-out,
 respectively. You will use these function to control the allocation of
 virtual and physical pages when writing your paging strategy. Each of
-these functions return \texttt{1} if they succeed in \emph{starting} a
+these functions returns \texttt{1} if they succeed in \emph{starting} a
 paging operation, or if a paging operation is \emph{already in
   progress}. 100 ticks after starting a paging operation, the
 operation will complete. Upon completion, the page maps passed
@@ -268,67 +273,107 @@ process:
 \item {\bf goto label}: Jump to ``label''
 \end{packed_item}
 
-You may wish to use this knowledge about the possible programs to:
-\begin{packed_item}
-\item Predict what pages a process will need next with rather high accuracy.
-\item Profile processes and know which kind of process each is.
-\item Accurately predict what pages are needed next by a process.
-\end{packed_item}
+As we discuss in the next section,
+you may wish to use this knowledge about the possible programs to:
+\begin{packed_enum}
+\item Profile processes and know which kind of programs each is an
+  instance of.
+\item Use this knowledge to predict what pages a process will need
+  in the future with rather high accuracy.
+\end{packed_enum}
 
 \section{Some Implementation Ideas}
+
+In general, your \texttt{pageit()} implementation will need to follow
+the basic flow presented in Figure \ref{fig:pageit-reactive}. You will
+probably spend most of your time deciding how to implement the ``Select
+a Page to Evict'' element.
+
+\begin{figure}[htbp]
+  \begin{center}
+    \includegraphics[width=0.8\textwidth]{pageit-Fig1.pdf}
+    \caption{Basic Reactive \texttt{pageit()} Flow}
+    \label{fig:pageit-reactive}
+  \end{center}
+\end{figure}
 
 A basic ``one-process-at-a-time'' implementation is provided for
 you. This implementation never actually ends up having to swap out any
 pages. Since only one process is allocated pages at a time, no more than
-20 pages are ever in use. When each process completed, it release all
+20 pages are ever in use. When each process completes, it releases all
 of its pages and the next process is allowed to allocate pages and
 run. This is a very simple solution, and as you might expect, does not
 provide very good performance. Still, it provides a simple starting
-point that demonstrates the simulator API. See \texttt{pager.c} for more
+point that demonstrates the simulator API. See \texttt{pager-basic.c} for more
 information.
 
 To start, create some form of ``Least Recently Used'' (LRU) paging
-algorithm. An LRU algorithms select a page that has not been accessed
-for some time when they must swap a page out to make room for a new
+algorithm. An LRU algorithm selects a page that has not been accessed
+for some time when it must swap a page out to make room for a new
 page to be swapped in. An LRU algorithm can either operate globally, or
 with respect to a given process. In the latter case, you may wish to
 pre-reserve a number of physical pages for each process and only allow
-each process to compete for pages from this subset. Your LRU algorithm
+each process to compete for pages from this subset. An stub for
+implementing your LRU version of \texttt{pageit()} has been created for
+you in the \texttt{pager-lru.c} file. Note the use of static variables
+in order to preserve local state between calls to \texttt{pageit()}.
+Your LRU algorithm
 should perform much better than the trivial solution discussed above,
 but will still suffer from performance issues. We can do better.
 
 To really do well on this assignment, you must create some form of
-predictive paging algorithm. Predictive algorithms attempt to predict
+predictive paging algorithm. A predictive algorithm attempts to predict
 what pages each process will require in the future and then swaps
-these pages in before they are needed. When these pages are needed,
-they are thus already swapped in and ready to go. The process need not
-block to wait for the required pages to be swapped in.
+these pages in before they are needed. Thus, when these pages are needed,
+they are already swapped in and ready to go. The process need not
+block to wait for the required pages to be swapped in, greatly
+increasing performance. . Figure
+\ref{fig:pageit-predictive} shows a modified version of the Figure
+\ref{fig:pageit-reactive} flowchart for a predictive implementation of
+\texttt{pageit}. As for the LRU implementation, a simple predictive stub
+has been created for you in the \texttt{pager-predict.c} file.
+
+\begin{figure}[htbp]
+  \begin{center}
+    \includegraphics[width=0.8\textwidth]{pageit-Fig2.pdf}
+    \caption{Basic Predictive \texttt{pageit()} Flow}
+    \label{fig:pageit-predictive}
+  \end{center}
+\end{figure}
 
 There are effectively two approaches to predictive algorithms. The
 first approach is to leverage your knowledge of the possible program
 types (see previous section). In this approach, one generally attempts
 to heuristically determine which program each process is an instance of
-by tracking the movement of the processes' program counter. Once each
-process is classified, you can use further heuristics to determine where
-in it;s execution the process is, and then implement a paging strategy
-that attempts to swap-in pages required by upcoming program actions
+by tracking the movement of the process's program counter (PC). Once each
+process is classified, you can use further PC heuristics to determine where
+in its execution the process is, and then implement a paging strategy
+that attempts to swap in pages required by upcoming program actions
 before they occur. Since the programs all have probabilistic elements,
-this approach will never be perfect, but it can do very well if
-successful.
+this approach will never be perfect, but it can do very well.
 
 The second approach to predictive algorithms is to ignore the
 knowledge you have been given regarding the various program
-types. Instead, you might track each processes program counter to try
+types. Instead, you might track each process's program counter to try
 to detect various common patterns (loops, jumps to specific locations,
 etc). If you detect a pattern, you assume that it will continue to
 repeat and attempt to swap in the necessary pages that the pattern
-touches before it needs them.
+touches before it needs them. Working set algorithms are a subset of
+this approach.
 
 Note that in any predictive operation, you ideally wish to stay
 100-200 ticks ahead of the execution of each process. This is the
 necessary predictive lead time in which you must make paging decisions
 in order to insure that the necessary pages are available when the
-process reaches them and that no blocking time is required.
+process reaches them and that no blocking time is required. As Figure
+\ref{fig:pageit-predictive} shows, in addition to swapping in pages
+predicatively, you must still handle the case where your prediction has
+failed and are thus forced to relatively swap in the necessary
+page. This is referred to as a predictive miss. A good predictive
+algorithm will minimize misses, but still must handle them when they
+occur. In other words, you can not assume that your predictions will
+always works and that every currently needed page is thus already
+available. Doing so will most likely lead to deadlock.
 
 There are a number of additional predictive notions that might prove
 useful involving state-space analysis and similar techniques. We
@@ -345,9 +390,9 @@ jumping off point (appropriately cited).
 \item {\bf Makefile} A GNU Make makefile to build all the code listed
   here.
 \item {\bf README} As the title so eloquently instructs: read it.
-\item {\bf simulator.c} The core simulator course code. For reference
+\item {\bf simulator.c} The core simulator source code. For reference
   only.
-\item {\bf simulator.h} The simulator header file including simulator
+\item {\bf simulator.h} The simulator header file including the simulator
   API.
 \item {\bf programs.c} Struct representing simulated programs for use
   by simulator. For reference and use by simulator code only.
@@ -358,18 +403,18 @@ jumping off point (appropriately cited).
 \item {\bf test-*} Executable test programs. Runs the simulator using
   your pager-*.c strategy. Built using \texttt{Makefile}. The simulator
   provides a lot of tools to help you analyze your program.
-  Run \texttt{./test -help} for information on available options. It
+  Run \texttt{./test-* -help} for information on available options. It
   also responds to various signals by printing the current page table
   and process execution state to the screen (try \texttt{ctrl-c} while
   simulator is executing).
 \item {\bf see.R} An R script for displaying a visualization of the
   process run/block activity in a simulation.
-  You must first run \texttt{./test -csv} to
+  You must first run \texttt{./test-* -csv} to
   generate the necessary trace files. To run visualization, lunch R in
   windowed graphics mode (in Linux: \texttt{R -g Tk \&} at the command
   prompt) from the directory containing the trace
-  files (or use \texttt{setwd} to set working directory to directory
-  containing trace files). Then run \texttt{source(``see.r'')} at the R
+  files (or use \texttt{setwd} to set your working directory to the directory
+  containing the trace files). Then run \texttt{source(``see.r'')} at the R
   command prompt to lunch the visualization.
 \end{packed_enum}
 
@@ -393,15 +438,21 @@ scores will earn the corresponding number of points:
 \item Code does not compile without errors : 0 Points
 \item $score >= 1.28$ : 5 Points
 \item $0.64 <= score < 1.28$ : 10 Points
-\item $0.32 <= score < 0.64$ : 15 Points
+\item $0.32 <= score < 0.64$ : 15 Points (Basic LRU implementation)
 \item $0.16 <= score < 0.32$ : 20 Points
 \item $0.08 <= score < 0.16$ : 25 Points
 \item $0.04 <= score < 0.08$ : 30 Points
 \item $0.02 <= score < 0.04$ : 35 Points
-\item $0.01 <= score < 0.02$ : 40 Points
+\item $0.01 <= score < 0.02$ : 40 Points (Good predictive implementation)
 \item $0.005 <= score < 0.01$ : 40 Points + 5 Points EC
-\item $score < 0.005$ : 40 Points + 10 Points EC
+\item $score < 0.005$ : 40 Points + 10 Points EC (Excellent predictive implementation)
 \end{packed_item}
+
+During your grading session, we will run your code using several
+random seeds and will take the average of these runs as your
+score. Thus, if your program's performance varies widely from
+run-to-run, you may get bitten in the grading session. In the words of
+Client Eastwood, ``Do I feel lucky?''.
 
 If your code generates warnings when building under gcc on the VM
 using \texttt{-Wall} and \texttt{-Wextra} you will be penalized 1
@@ -415,8 +466,6 @@ point per warning. In addition, to receive full credit your submission must:
 The other 60\% of your grade will be determined via your grading
 interview where you will be expected to explain your work and answer
 questions regarding it and any concepts related to this assignment.
-
-\section{Extra Credit}
 
 \section{Obtaining Code}
 The starting code for this assignment is available on the Moodle and
