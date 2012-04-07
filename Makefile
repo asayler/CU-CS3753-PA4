@@ -30,7 +30,7 @@ pager-predict.o: pager-predict.c simulator.h
 	$(CC) $(CFLAGS) $<
 
 clean:
-	rm -f test test-lru test-predict
+	rm -f test-basic test-lru test-predict
 	rm -f *.o
 	rm -f *~
 	rm -f *.csv
