@@ -204,22 +204,29 @@ contains:
 \item[\texttt{long pages[MAXPROCPAGES]}] \hfill \\
   A bitmap array representing the
   page map for a given process. If \texttt{pages[X]} is
-  \texttt{0}, page X
-  is swapped out. If \texttt{pages[X]} is \texttt{1},
-  page X is currently swapped in.
+  \texttt{0}, page X is swapped out, swapping out, or swapping in.
+  If \texttt{pages[X]} is \texttt{1}, page X is currently swapped in.
 \end{packed_desc}
 
 The simulator also exports a function called \texttt{pagein} and a
 function called \texttt{pageout}. These functions request that a
-specific page for a specific process be swapped-in or swapped-out,
+specific page for a specific process be swapped in or swapped out,
 respectively. You will use these function to control the allocation of
 virtual and physical pages when writing your paging strategy. Each of
 these functions returns \texttt{1} if they succeed in \emph{starting} a
-paging operation, or if a paging operation is \emph{already in
-  progress}. 100 ticks after starting a paging operation, the
-operation will complete. Upon completion, the page maps passed
+paging operation, if a paging operation is \emph{already in
+  progress}, or if the \emph{requested state already exists}.
+100 ticks after requesting a paging operation, the
+operation will complete. When calling \texttt{pagein}, the page maps passed
 to \texttt{pageit}
-will reflect the new state of the simulator. These functions return
+will reflect the new state of the simulator after the request
+completes. When calling \texttt{pageout}, the page maps passed
+to \texttt{pageit}
+will reflect the new state of the simulator immediately after the request
+is made. In short, a page is recognized as swapped out as soon as a
+\texttt{pageout} request is made, but is not recognized as swapped in
+until after a \texttt{pagein} request completes.
+These functions return
 \texttt{0} if the paging request can not be processed (due to
 exceeding the limit of physical pages or because another paging
 operation is currently in process on the requested page) or if the
