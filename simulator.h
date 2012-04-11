@@ -38,7 +38,7 @@ typedef struct pentry Pentry;
  *   proc: process to work upon (0-19) 
  *   page: page to put in (0-19)
  * Returns:
- *   1 if pagein started or already running
+ *   1 if pagein started, already running, or paged in
  *   0 if it can't start (e.g., swapping out) 
  */
 extern int pagein (int process, int page); 
@@ -49,7 +49,7 @@ extern int pagein (int process, int page);
  *   proc: process to work upon (0-19)
  *   page: page to swap out. 
  * Returns: 
- *   1 if pageout started or already running
+ *   1 if pageout started, already running, or paged out
  *   0 if can't start (e.g., swapping in)
  */
 extern int pageout(int process, int page); 
