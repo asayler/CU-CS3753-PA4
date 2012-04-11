@@ -407,6 +407,9 @@ jumping off point (appropriately cited).
   one process at a time.
 \item {\bf pager-lru.c} A stub for your LRU paging implementation.
 \item {\bf pager-predict.c} A stub for your predictive paging implementation.
+\item {\bf api-test.c} A pageit implementation that detects and prints
+  simulator state changes. May be useful if you want to confirm the
+  behavior of the simulator API. Builds to \texttt{test-api}.
 \item {\bf test-*} Executable test programs. Runs the simulator using
   your pager-*.c strategy. Built using \texttt{Makefile}. The simulator
   provides a lot of tools to help you analyze your program.
@@ -414,6 +417,7 @@ jumping off point (appropriately cited).
   also responds to various signals by printing the current page table
   and process execution state to the screen (try \texttt{ctrl-c} while
   simulator is executing).
+\item {\bf test-api} An API test program. See \texttt{api-test.c}.
 \item {\bf see.R} An R script for displaying a visualization of the
   process run/block activity in a simulation.
   You must first run \texttt{./test-* -csv} to
