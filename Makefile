@@ -44,3 +44,4 @@ clean:
 	rm -f handout/*~
 	rm -f handout/*.log
 	rm -f handout/*.aux
+	rm -f handout/*.out
