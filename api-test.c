@@ -44,8 +44,7 @@ void pageit(Pentry q[MAXPROCESSES]) {
 	    
 	    pageinret = pagein(testProc, testPage);
 	    fprintf(stdout, "%4d - pagein(%d, %d) returns %d\n",
-		    tick, testProc, testPage, pageinret);
-	    
+		    tick, testProc, testPage, pageinret);	    
 
 	    fprintf(stdout, "%4d - q[%d].pages[%d] = %ld\n",
 		    tick, testProc, testPage, q[testProc].pages[testPage]);
