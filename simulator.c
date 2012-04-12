@@ -262,7 +262,7 @@ static void process_clear(Process *q) {
    q->npages = 0; 
    /* no physical pages assigned */ 
    for (i=0; i<MAXPROCPAGES; i++) {
-	q->pages[i]=-PAGEWAIT; 
+	q->pages[i]=-PAGEWAIT-1; 
 	q->blocked[i]=FALSE; // ALC: so simulator will log first access 
    } 
    q->active=FALSE; 
@@ -295,8 +295,8 @@ static void process_load(Process *q, Program *p, int pid, int kind) {
 static void process_unload(int pnum, Process *q) { 
    long i; 
    for (i=0; i<q->npages; i++) 
-       if (q->pages[i]!=-PAGEWAIT) { 
-	   pagesavail++; q->pages[i]=-PAGEWAIT; q->blocked[i]=1;
+       if (q->pages[i]>=-PAGEWAIT) { 
+	   pagesavail++; q->pages[i]=-PAGEWAIT-1; q->blocked[i]=1;
        } 
    q->active=FALSE; 
    sim_log(LOG_LOAD,"process %2d; pc %04d: unloaded\n",pnum, q->pc); 
@@ -425,7 +425,7 @@ int pagein(int process, int page) {
 	return TRUE; /* on its way */ 
     if (pagesavail==0) 
 	return FALSE; 
-    if (processes[process]->pages[page]!=-PAGEWAIT ) 
+    if (processes[process]->pages[page]>=-PAGEWAIT ) 
 	return FALSE; /* not yet out */ 
     sim_log(LOG_PAGE,"process=%2d page=%3d start pagein\n",process,page);
     if (pages) fprintf(pages,"%ld,%d,%d,%ld,%ld,coming\n",
@@ -666,7 +666,7 @@ static int allblocked() {
 	    stat=processes[i]->pages[(int)(processes[i]->pc/PAGESIZE)]; 
 	    if (stat>0) memwait++;	/* waiting for swap in */ 
 	    else if (stat==0) runnable++; /* ok */ 
-	    else if (stat==-PAGEWAIT) allfree++; /* free */
+	    else if (stat==-PAGEWAIT-1) allfree++; /* free */
 	    else freewait++; /* waiting for swap out */ 
 	} 
 
@@ -690,7 +690,7 @@ static void allage () {
     	   long j; 	
 	   for (j=0; j<processes[i]->npages; j++) {
                 if (processes[i]->pages[j]==0) ; 
-                else if (processes[i]->pages[j]==-PAGEWAIT) ; 
+                else if (processes[i]->pages[j]<-PAGEWAIT) ; 
 		else if (processes[i]->pages[j]>0) { 
 		    processes[i]->pages[j]--; 
 		    if (processes[i]->pages[j]==0) { 
@@ -699,9 +699,9 @@ static void allage () {
 			    sysclock,i,j,processes[i]->pid, processes[i]->kind); 
 		    } 
 		} else if (processes[i]->pages[j]<0 
-                       && processes[i]->pages[j]>-PAGEWAIT) {
+                       && processes[i]->pages[j]>=-PAGEWAIT) {
 		    processes[i]->pages[j]--; 
-		    if(processes[i]->pages[j]==-PAGEWAIT) { 
+		    if(processes[i]->pages[j]<-PAGEWAIT) { 
 			sim_log(LOG_PAGE,"process=%2d page=%3d end   pageout\n",i,j);
 			if (pages) fprintf(pages,"%ld,%ld,%ld,%ld,%ld,out\n",
 			    sysclock,i,j,processes[i]->pid, processes[i]->kind); 
