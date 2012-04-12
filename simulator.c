@@ -284,7 +284,7 @@ static void process_load(Process *q, Program *p, int pid, int kind) {
    // fprintf(stderr,"actual page size for process is %d\n", (q->program->size+PAGESIZE-1)/PAGESIZE); 
    q->npages = MAXPROCPAGES; 
    for (i=0; i<MAXPROCPAGES; i++) { 
-	q->pages[i]=-PAGEWAIT; 
+	q->pages[i]=-PAGEWAIT-1; 
  	q->blocked[i]=FALSE; // ALC: so simulator will log first access 
    } 
    /* no physical pages assigned */ 
@@ -666,7 +666,7 @@ static int allblocked() {
 	    stat=processes[i]->pages[(int)(processes[i]->pc/PAGESIZE)]; 
 	    if (stat>0) memwait++;	/* waiting for swap in */ 
 	    else if (stat==0) runnable++; /* ok */ 
-	    else if (stat==-PAGEWAIT-1) allfree++; /* free */
+	    else if (stat<-PAGEWAIT) allfree++; /* free */
 	    else freewait++; /* waiting for swap out */ 
 	} 
 
