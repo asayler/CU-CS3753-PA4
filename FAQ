@@ -1,30 +1,78 @@
 Question:
 
-I've been chasing down some anomalous behavior in the simulator and just wanted to verify if it is expected behavior or not.
+I've been chasing down some anomalous behavior in the simulator and
+just wanted to verify if it is expected behavior or not.
 
-The abridged version is that it appears the simulator executes 40 programs regardless of what you specify in -procs, and that the result is that processor 0 winds up unloading and loading the difference between the number of programs and number of processes specified. For me, this can be verified by running "./test-basic -load" or "./test-basic -load -procs 1" - the output will show process 0 doing a series of repeated unloads/loads. The number 40 doesn't appear to be random - initqueue() (line 444 on simulator.c) appears to initialize a program queue to be of size PROGRAMS*8 (40) and then enqueue that many programs to execute, and then allstep() (line 621 in simulator.c) automatically loads a new program if the queue is not empty (lines 639-641).
+The abridged version is that it appears the simulator executes 40
+programs regardless of what you specify in -procs, and that the result
+is that processor 0 winds up unloading and loading the difference
+between the number of programs and number of processes specified. For
+me, this can be verified by running "./test-basic -load" or
+"./test-basic -load -procs 1" - the output will show process 0 doing a
+series of repeated unloads/loads. The number 40 doesn't appear to be
+random - initqueue() (line 444 on simulator.c) appears to initialize a
+program queue to be of size PROGRAMS*8 (40) and then enqueue that many
+programs to execute, and then allstep() (line 621 in simulator.c)
+automatically loads a new program if the queue is not empty (lines
+639-641).
 
-The only reason I found it is that the loading/unloading cycle is occurring within a single tick and p[].active is not being cycled, causing and inconsistent state.
+The only reason I found it is that the loading/unloading cycle is
+occurring within a single tick and p[].active is not being cycled,
+causing and inconsistent state.
 
 Is this expected behavior?
 
 Answer:
 
-This is the intended behavior, although I'm afraid I didn't make this aspect of the simulator clear in the handout.
+This is the intended behavior, although I'm afraid I didn't make this
+aspect of the simulator clear in the handout.
  
 Here's what's going on:
-The simulator randomly generates 40 programs (each an instance of one of the 5 possible program types).
-The simulator spawns 20 processors by default, or what ever is specific after the -proc argument
-The simulator loads the first X programs into the available processors (for the default parameters, this will be the first 20 programs) and begins running these X processes.
-As each processor finishes running its current program (process), the simulator reloads the processor with any remaining programs in the run queue.
-When all programs have run, the simulator exits.
-During this process, the value of q[X].active will remain 1 until there are no programs left to run (empty run queue) and processor X has completed its currently running process.
- 
-Thus, on the pager-basic implementation, you see processor 0 getting loaded with the additional programs from the queue because it is the only processor being allocated pages until there is nothing left for it to run. It is effectively given priority over all other processors, and thus it always completes first and gets reloaded with additional programs until the queue is depleted. The pager-basic implementation starves the other processors until proc0 has nothing left to do. With a real paging strategy, the processors will be loaded with additional program instances as they become available. The simulator will not always load the additional programs into the proc0, this is just an artifact of the "run proc0 until it can't do anything else" behavior of the basic pager. Try running an LRU implementation with the -load flag to see what I mean.
- 
-This information may become relevant when coding a predictive pager, as you may need to account for the fact that a processor will be loaded with a new (possible different) program after completing it's initially loaded program. Unfortunately, the only way to detect the shift from one program to another is the jump of the PC back to zero (not necessarily a definitive indicator) and a change in PC pattern behavior.
- 
-Predictive strategies that do not attempt to determine which program type is running can probably ignore this issue. Likewise, this behavior probably doesn't make any difference for most agnostic LRU implementations.
 
-I never noticed this behavior in my solutions because my solutions all try to minimize the necessary state that they keep and avoid trying to determine exactly which program type is running. Thus, they handle a processor changing to a new program just as they would handle the change to a new part of a single program.
+1. The simulator randomly generates 40 programs (each an instance of
+   one of the 5 possible program types).
+2. The simulator spawns 20 processors by default, or what ever is
+   specific after the -proc argument
+3. The simulator loads the first X programs into the available
+   processors (for the default parameters, this will be the first 20
+   programs) and begins running these X processes.
+4. As each processor finishes running its current program (process),
+   the simulator reloads the processor with any remaining programs in the
+   run queue.
+5. When all programs have run, the simulator exits.
+6. During this process, the value of q[X].active will remain 1 until
+   there are no programs left to run (empty run queue) and processor X
+   has completed its currently running process.
+ 
+Thus, on the pager-basic implementation, you see processor 0 getting
+loaded with the additional programs from the queue because it is the
+only processor being allocated pages until there is nothing left for
+it to run. It is effectively given priority over all other processors,
+and thus it always completes first and gets reloaded with additional
+programs until the queue is depleted. The pager-basic implementation
+starves the other processors until proc0 has nothing left to do. With
+a real paging strategy, the processors will be loaded with additional
+program instances as they become available. The simulator will not
+always load the additional programs into the proc0, this is just an
+artifact of the "run proc0 until it can't do anything else" behavior
+of the basic pager. Try running an LRU implementation with the -load
+flag to see what I mean.
+ 
+This information may become relevant when coding a predictive pager,
+as you may need to account for the fact that a processor will be
+loaded with a new (possible different) program after completing it's
+initially loaded program. Unfortunately, the only way to detect the
+shift from one program to another is the jump of the PC back to zero
+(not necessarily a definitive indicator) and a change in PC pattern
+behavior.
+ 
+Predictive strategies that do not attempt to determine which program
+type is running can probably ignore this issue. Likewise, this
+behavior probably doesn't make any difference for most agnostic LRU
+implementations.
 
+I never noticed this behavior in my solutions because my solutions all
+try to minimize the necessary state that they keep and avoid trying to
+determine exactly which program type is running. Thus, they handle a
+processor changing to a new program just as they would handle the
+change to a new part of a single program.
